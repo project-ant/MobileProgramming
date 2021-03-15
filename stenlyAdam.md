@@ -46,7 +46,10 @@ Sebagai contoh :
 
 - Fork project github ini. Ada terdapat 3 branch yaitu: master, parallel-a, parallel-b
 - Dari local laptop/PC anda buat branch baru dengan nama sesuai dengan nama anda, dengan format camelCase. contoh: johnDoe
-- lakukan pull request kedalam branch sesuai dengan parallel kelas anda
+- Buat file baru sama seperti nama branch anda dengan format .md. contoh: johnDoe.md
+- Edit file tersebut dengan mengisi status instalasi pada tabel yang sudah disediakan.
+- git add dan commit dengan commit message "adding johnDoe.md"
+- lakukan pull request ke dalam branch sesuai dengan parallel kelas anda. (Bukan Branch Master)
 
   [react native]: https://reactnative.dev/docs/environment-setup
   [running on device]: https://reactnative.dev/docs/running-on-device
