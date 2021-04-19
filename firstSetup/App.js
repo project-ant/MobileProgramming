@@ -1,112 +1,127 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- * @flow strict-local
- */
+//Timothy Merfry Tiwow / 105021810004, 2021
 
-import React from 'react';
-//import type {Node} from 'react';
+import axios from 'axios';
+import React, { useRef, useState } from 'react';
 import {
+  Animated,
+  Dimensions,
   SafeAreaView,
-  ScrollView,
   StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
 } from 'react-native';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+import Overlay from './src/components/molecules/Overlay'
+import RegistrationPage from './src/components/pages/RegistrationPage'
+import UsersListPage from './src/components/pages/UsersListPage'
 
-const Section = ({children, title}) => {
-  const isDarkMode = useColorScheme() === 'dark';
+const App = () => {
+  StatusBar.setBarStyle('dark-content')
+  const shrinkTransition = useRef(new Animated.Value(0)).current    //for depe sidebar
+  const shrinkTransition2 = useRef(new Animated.Value(0)).current   //for depe page preview
+  
+  const [shrinkState, setShrinkState] = useState(1)
+  const [currPage, setCurrPage] = useState('regis')
+  const [apiData, setApiData] = useState([])
+
+  const fetchApiData = () => {
+    axios.get('http://10.0.2.2:3000/users').then(({data}) => setApiData(data))
+  }
+
+  const postToApi = data => {
+    axios.post('http://10.0.2.2:3000/users', data).then(() => fetchApiData())
+  }
+
+  const menuOptions = [
+    {
+      label: 'Registration',
+      onPress: () => setCurrPage('regis')
+    },
+    {
+      label: 'Users List',
+      onPress: () => setCurrPage('ulist')
+    },
+  ]
+
+  const pages = {
+    'regis' : <RegistrationPage postToApi={postToApi}/>,
+    'ulist' : <UsersListPage fetchApiData={fetchApiData} apiData={apiData}/>
+  }
+
+  const shrinkToggleHandler = () => {
+    if(shrinkState != 0) {
+      Animated.timing(shrinkTransition2, {
+        toValue: 1.0,
+        duration: 500,
+        useNativeDriver: false
+      }).start()
+      Animated.timing(shrinkTransition, {
+        toValue: 1.0,
+        duration: 500,
+        useNativeDriver: true
+      }).start(({finished}) => finished && setShrinkState(0))
+    } else if (shrinkState != 1) {
+      Animated.timing(shrinkTransition2, {
+        toValue: 0,
+        duration: 500,
+        useNativeDriver: false
+      }).start()
+      Animated.timing(shrinkTransition, {
+        toValue: 0,
+        duration: 500,
+        useNativeDriver: true
+      }).start(({finished}) => finished && setShrinkState(1))
+    }
+  }
+
+  const shrinkTransform = {
+    transform:[
+      {translateX: shrinkTransition.interpolate({
+        inputRange: [0, 1],
+        outputRange: [Dimensions.get('window').width/5.5, 0]
+      })}, 
+      {translateY: shrinkTransition.interpolate({
+        inputRange: [0, 1],
+        outputRange: [Dimensions.get('window').width/7.5, 0]
+      })},
+      {scale: shrinkTransition.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0.6, 1.0]
+      })}
+    ],
+    height: '100%',
+  }
   return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-};
-
-const App: () => Node = () => {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
-
-  return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
+    <SafeAreaView>
+      <StatusBar translucent backgroundColor='transparent'/>
+      <Animated.View style={shrinkTransform}>
+        <Animated.View style={{
+          borderRadius: shrinkTransition2.interpolate({
+            inputRange: [0, 1],
+            outputRange: [25, 0]
+          }),
+          flex: 1,
+          elevation: shrinkTransition2.interpolate({
+            inputRange: [0, 1],
+            outputRange: [8, 0]
+          }),
+          backgroundColor: shrinkTransition2.interpolate({
+            inputRange: [0, 1],
+            outputRange: ['hsla(0, 0%, 100%, 1.0)', 'hsla(0, 0%, 100%, 0.0)']
+          }),
+          overflow: 'hidden'
           }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.js</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
+        {
+          pages[currPage]
+        }
+        </Animated.View>
+      </Animated.View>
+      <Overlay  menuOptions={menuOptions} 
+                shrinkState={shrinkState} 
+                setShrinkState={setShrinkState}
+                shrinkTransition={shrinkTransition}
+                shrinkToggleHandler={shrinkToggleHandler}/>
     </SafeAreaView>
   );
 };
 
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
 
 export default App;
